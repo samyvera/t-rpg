@@ -22,40 +22,11 @@ window.onload = () => {
     };
     var keys = trackKeys(keyCodes);
 
-    var overworld = [
-        '                                ',
-        '                                ',
-        '                                ',
-        '                                ',
-        '     xxxxxxxxxxxxxxxxxxxxxxx    ',
-        '     x                     x    ',
-        '     x       xx   xxxxxxxx x    ',
-        '     x f     xx   xxxxxxxx x    ',
-        '     x   f   xx   xxxxxxxx x    ',
-        '     x       xx   xxxxxxxx x    ',
-        '     x    xxxxx   xxxxxxxx x    ',
-        '     x       xx            x    ',
-        '     x   f   xx            x    ',
-        '     x xx    xx  xx  f     x    ',
-        '     x xx    xx  xx        x    ',
-        '     x       xx      x     x    ',
-        '     x    f  xx        f   x    ',
-        '     x       xx  f         x    ',
-        '     x  xx   xxxxx   xxxxx x    ',
-        '     x  xx   xxxxx   xxxxx x    ',
-        '     x  xx        o o      x    ',
-        '     x               f     x    ',
-        '     x   f  o           xx x    ',
-        '     x      o    f   x  xx x    ',
-        '     x      f  xx    x     x    ',
-        '     x               x     x    ',
-        '     x  f         f        x    ',
-        '     xxxxxxxxxxxxxxxxxxxxxxx    ',
-        '                                ',
-        '                                ',
-        '                                ',
-        '                                ',
-    ];
+    var overworld = new Array(32);
+    for (let i = 0; i < overworld.length; i++) overworld[i] = '';
+    for (let y = 0; y < overworld.length; y++) for (let x = 0; x < overworld.length; x++) {
+        overworld[y] += perlinNoise(x/6, y/6, 0.8) < 0.6 ? ' ' : 'x';
+    }
 
     var level = new Level(overworld, { x:6, y:6 }, { x:20, y:20 });
     var display = new Display(level);

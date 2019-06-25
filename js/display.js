@@ -1,6 +1,6 @@
 class Display {
     constructor(level) {
-        this.zoom = 4;
+        this.zoom = 2;
         this.frame = 0;
 
         this.canvas = document.createElement('canvas');
