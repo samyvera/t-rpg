@@ -53,7 +53,6 @@ class Level {
                 else if (tileIndex === 'c') tile = 'cliff';
                 else if (tileIndex === 'w') tile = 'water';
                 else if (tileIndex === 's') tile = 'sand';
-                else if (tileIndex === 'd') tile = 'deep-water';
                 else tile = 'unknown';
 
                 grid[x][y] = { pos:{ x:x, y:y }, tile:tile };

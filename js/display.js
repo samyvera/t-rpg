@@ -1,6 +1,6 @@
 class Display {
     constructor(level) {
-        this.zoom = 3;
+        this.zoom = 2;
         this.frame = 0;
 
         this.canvas = document.createElement('canvas');
@@ -51,7 +51,7 @@ class Display {
             var yEnd = Math.ceil(view.bottom + view.height) + 1;
 
             var tileSet = document.createElement("img");
-            tileSet.src = "img/tileSet.png";
+            tileSet.src = "img/tileSet2.png";
             var tileX;
             var tileY;
 
@@ -60,8 +60,7 @@ class Display {
                     if (level.overworld[level.pos.y + y] === undefined || level.overworld[level.pos.y + y][level.pos.x + x] === undefined) continue;
                     else {
                         var tile = level.overworld[level.pos.y + y][level.pos.x + x];
-                        if (tile === 'd') tileX = 0, tileY = 0;
-                        else if (tile === 'w') tileX = 4, tileY = 0;
+                        if (tile === 'w') tileX = 4, tileY = 0;
                         else if (tile === 's') tileX = 8, tileY = 0;
                         else if (tile === 'g') tileX = 12, tileY = 0;
                         else if (tile === 't') tileX = 16, tileY = 0;
@@ -69,9 +68,8 @@ class Display {
 
                         var interact = (a, b) => {
                             if (
-                                a === 'd' ||
-                                a === 'w' && b !== 'd' ||
-                                a === 's' && !(b === 'w' || b === 'd') ||
+                                a === 'w' && !(b === 's' || b === 'c') ||
+                                a === 's' && b !== 'w' ||
                                 a === 'g' && b !== 's'
                             ) return true;
                             else return false;
@@ -152,6 +150,10 @@ class Display {
 
                         var screenX = (x - view.left) * 16;
                         var screenY = (y - view.bottom) * 16;
+
+                        if (tile === 'w') {
+                            this.cx.drawImage(tileSet, 3 * 16, Math.round(this.frame / 8) % 32 * 16, 16, 16, screenX, screenY, 16, 16);
+                        }
                         this.cx.drawImage(tileSet, tileX * 16, tileY * 16, 16, 16, screenX, screenY, 16, 16);
                     }
                 }

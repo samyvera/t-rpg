@@ -27,8 +27,7 @@ window.onload = () => {
         else if (number < 0.576) return 'g';
         else if (number < 0.5925) return 'c';
         else if (number < 0.65) return 's';
-        else if (number < 0.7) return 'w';
-        else return 'd';
+        else return 'w';
     }
 
     var evaluate = value => {
