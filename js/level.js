@@ -48,9 +48,13 @@ class Level {
                 var tileIndex = this.overworld[this.pos.y + y][this.pos.x + x];
                 var tile = null;
                 
-                if (tileIndex === 'x') tile = 'wood';
-                else if (tileIndex === 'o') tile = 'castle';
-                else tile = 'plain';
+                if (tileIndex === 't') tile = 'wood';
+                else if (tileIndex === 'g') tile = 'plain';
+                else if (tileIndex === 'c') tile = 'cliff';
+                else if (tileIndex === 'w') tile = 'water';
+                else if (tileIndex === 's') tile = 'sand';
+                else if (tileIndex === 'd') tile = 'deep-water';
+                else tile = 'unknown';
 
                 grid[x][y] = { pos:{ x:x, y:y }, tile:tile };
             };
@@ -58,7 +62,7 @@ class Level {
         }
         this.grid = this.initGrid();
 
-        this.cursor = new Cursor({ x:0, y:0 });
+        this.cursor = new Cursor({ x:this.size.x / 2, y:this.size.y / 2 });
 
         this.update = keys => {
             this.cursor.update(this, keys);

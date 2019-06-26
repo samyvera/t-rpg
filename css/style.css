@@ -5,6 +5,7 @@ body {
   margin: 0;
   display: flex;
   background-image: url('../img/background.png');
+  overflow: hidden;
 }
 
 canvas {
