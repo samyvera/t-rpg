@@ -1,6 +1,6 @@
 class Display {
     constructor(level) {
-        this.zoom = 2;
+        this.zoom = 0.75;
         this.frame = 0;
 
         this.canvas = document.createElement('canvas');
@@ -62,6 +62,7 @@ class Display {
                         var tile = level.overworld[level.pos.y + y][level.pos.x + x];
                         if (tile === 'w') tileX = 4, tileY = 0;
                         else if (tile === 's') tileX = 8, tileY = 0;
+                        else if (tile === 'r') tileX = 0, tileY = 0;
                         else if (tile === 'g') tileX = 12, tileY = 0;
                         else if (tile === 't') tileX = 16, tileY = 0;
                         else if (tile === 'c') tileX = 0, tileY = 4;
@@ -75,18 +76,26 @@ class Display {
                             else return false;
                         }
 
-                        if (tile !== 'd' && tile !== 'c') {
+                        if (tile !== 'c' && tile !== 'r') {
                             var n = {
-                                bottom:level.overworld[level.pos.y + y + 1][level.pos.x + x] === tile || interact(tile, level.overworld[level.pos.y + y + 1][level.pos.x + x]),
-                                right:level.overworld[level.pos.y + y][level.pos.x + x + 1] === tile || interact(tile, level.overworld[level.pos.y + y][level.pos.x + x + 1]),
-                                top:level.overworld[level.pos.y + y - 1][level.pos.x + x] === tile || interact(tile, level.overworld[level.pos.y + y - 1][level.pos.x + x]),
-                                left:level.overworld[level.pos.y + y][level.pos.x + x - 1] === tile || interact(tile, level.overworld[level.pos.y + y][level.pos.x + x - 1]),
+                                bottom:level.overworld[level.pos.y + y + 1] && level.overworld[level.pos.y + y + 1][level.pos.x + x] &&
+                                    (level.overworld[level.pos.y + y + 1][level.pos.x + x] === tile || interact(tile, level.overworld[level.pos.y + y + 1][level.pos.x + x])),
+                                right:level.overworld[level.pos.y + y] && level.overworld[level.pos.y + y][level.pos.x + x + 1] &&
+                                    (level.overworld[level.pos.y + y][level.pos.x + x + 1] === tile || interact(tile, level.overworld[level.pos.y + y][level.pos.x + x + 1])),
+                                top:level.overworld[level.pos.y + y - 1] && level.overworld[level.pos.y + y - 1][level.pos.x + x] &&
+                                    (level.overworld[level.pos.y + y - 1][level.pos.x + x] === tile || interact(tile, level.overworld[level.pos.y + y - 1][level.pos.x + x])),
+                                left:level.overworld[level.pos.y + y] && level.overworld[level.pos.y + y][level.pos.x + x - 1] &&
+                                    (level.overworld[level.pos.y + y][level.pos.x + x - 1] === tile || interact(tile, level.overworld[level.pos.y + y][level.pos.x + x - 1])),
 
-                                bottomRight:level.overworld[level.pos.y + y + 1][level.pos.x + x + 1] === tile || interact(tile, level.overworld[level.pos.y + y + 1][level.pos.x + x + 1]),
-                                topRight:level.overworld[level.pos.y + y - 1][level.pos.x + x + 1] === tile || interact(tile, level.overworld[level.pos.y + y - 1][level.pos.x + x + 1]),
-                                topLeft:level.overworld[level.pos.y + y - 1][level.pos.x + x - 1] === tile || interact(tile, level.overworld[level.pos.y + y - 1][level.pos.x + x - 1]),
-                                bottomLeft:level.overworld[level.pos.y + y + 1][level.pos.x + x - 1] === tile || interact(tile, level.overworld[level.pos.y + y + 1][level.pos.x + x - 1])
-                            }
+                                bottomRight:level.overworld[level.pos.y + y + 1] && level.overworld[level.pos.y + y + 1][level.pos.x + x + 1] &&
+                                    (level.overworld[level.pos.y + y + 1][level.pos.x + x + 1] === tile || interact(tile, level.overworld[level.pos.y + y + 1][level.pos.x + x + 1])),
+                                topRight:level.overworld[level.pos.y + y - 1] && level.overworld[level.pos.y + y - 1][level.pos.x + x + 1] &&
+                                    (level.overworld[level.pos.y + y - 1][level.pos.x + x + 1] === tile || interact(tile, level.overworld[level.pos.y + y - 1][level.pos.x + x + 1])),
+                                topLeft:level.overworld[level.pos.y + y - 1] && level.overworld[level.pos.y + y - 1][level.pos.x + x - 1] &&
+                                    (level.overworld[level.pos.y + y - 1][level.pos.x + x - 1] === tile || interact(tile, level.overworld[level.pos.y + y - 1][level.pos.x + x - 1])),
+                                bottomLeft:level.overworld[level.pos.y + y + 1] && level.overworld[level.pos.y + y + 1][level.pos.x + x - 1] &&
+                                    (level.overworld[level.pos.y + y + 1][level.pos.x + x - 1] === tile || interact(tile, level.overworld[level.pos.y + y + 1][level.pos.x + x - 1]))
+                            };
 
                             if (!(n.bottom && n.right && n.top && n.left)) {
                                 if (!n.bottom && !n.right && !n.top && !n.left) tileY += 1;
@@ -147,6 +156,24 @@ class Display {
                                 else if (!n.topRight && !n.bottomRight && n.bottomLeft && !n.topLeft) tileX += 3, tileY += 3;
                             }
                         }
+                        // else {
+                        //     var n = {
+                        //         bottom:level.overworld[level.pos.y + y + 1][level.pos.x + x],
+                        //         right:level.overworld[level.pos.y + y][level.pos.x + x + 1],
+                        //         top:level.overworld[level.pos.y + y - 1][level.pos.x + x],
+                        //         left:level.overworld[level.pos.y + y][level.pos.x + x - 1],
+
+                        //         bottomRight:level.overworld[level.pos.y + y + 1][level.pos.x + x + 1],
+                        //         topRight:level.overworld[level.pos.y + y - 1][level.pos.x + x + 1],
+                        //         topLeft:level.overworld[level.pos.y + y - 1][level.pos.x + x - 1],
+                        //         bottomLeft:level.overworld[level.pos.y + y + 1][level.pos.x + x - 1]
+                        //     };
+
+                        //     if (n.top === 's' && n.left === 's' && n.right === 'g' && n.bottom === 'g') tileX = 8, tileY = 12;
+                        //     if (n.top === 's' && n.left === 'g' && n.right === 's' && n.bottom === 'g') tileX = 8, tileY = 13;
+                        //     else if (n.top === 'g' && n.left === 'c' && n.right === 'c' && n.bottom === 's') tileX = 9, tileY = 12;
+                        //     else if (n.top === 'g' && n.left === 's' && n.right === 'g' && n.bottom === 's') tileX = 9, tileY = 13;
+                        // }
 
                         var screenX = (x - view.left) * 16;
                         var screenY = (y - view.bottom) * 16;

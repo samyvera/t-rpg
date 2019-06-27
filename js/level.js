@@ -51,6 +51,7 @@ class Level {
                 if (tileIndex === 't') tile = 'wood';
                 else if (tileIndex === 'g') tile = 'plain';
                 else if (tileIndex === 'c') tile = 'cliff';
+                else if (tileIndex === 'r') tile = 'road';
                 else if (tileIndex === 'w') tile = 'water';
                 else if (tileIndex === 's') tile = 'sand';
                 else tile = 'unknown';
