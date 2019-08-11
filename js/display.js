@@ -1,13 +1,13 @@
 class Display {
     constructor(level) {
-        this.zoom = 0.75;
         this.frame = 0;
+        this.zoom = 3;
 
         this.canvas = document.createElement('canvas');
         this.cx = this.canvas.getContext("2d");
 
-        this.canvas.width = Math.min(innerWidth, level.size.x * 16 * this.zoom);
-        this.canvas.height = Math.min(innerHeight, level.size.y * 16 * this.zoom);
+        this.canvas.width = Math.min(innerWidth, level.grid.size.x * 16 * this.zoom);
+        this.canvas.height = Math.min(innerHeight, level.grid.size.y * 16 * this.zoom);
         this.cx.scale(this.zoom, this.zoom);
         this.cx.imageSmoothingEnabled = false;
 
@@ -22,8 +22,10 @@ class Display {
             this.updateViewport();
 
             this.drawBackground();
-
             this.drawCursor();
+            this.drawUnits();
+
+            this.drawHUD();
 
             this.frame++;
         }
@@ -31,16 +33,30 @@ class Display {
         this.updateViewport = () => {
             var view = this.viewport;
 
-            var focus = {
-                x: level.cursor.pos.x,
-                y: level.cursor.pos.y
-            };
+            var focus = new Vector2D(level.grid.cursor.pos.x, level.grid.cursor.pos.y);
 
             if (focus.x < view.left) view.left = focus.x;
             else if (focus.x > view.left + view.width) view.left = focus.x - view.width;
 
             if (focus.y < view.bottom) view.bottom = focus.y;
             else if (focus.y > view.bottom + view.height) view.bottom = focus.y - view.height;
+        }
+
+        this.drawUnits = () => {
+            var view = this.viewport;
+            var xStart = Math.floor(view.left);
+            var xEnd = Math.ceil(view.left + view.width) + 1;
+            var yStart = Math.floor(view.bottom);
+            var yEnd = Math.ceil(view.bottom + view.height) + 1;
+
+            level.grid.units.forEach(unit => {
+                this.cx.fillStyle = unit.affiliation ? '#00f' : '#f00';
+                this.cx.fillStyle = unit.isSelected ? '#f80' : this.cx.fillStyle;
+                if (unit.pos.x < xEnd && unit.pos.x + 1 > xStart &&
+                    unit.pos.y < yEnd && unit.pos.y + 1 > yStart) {
+                    this.cx.fillRect((unit.pos.x - view.left) * 16 + 2, (unit.pos.y - view.bottom) * 16 + 2, 12, 12);
+                }
+            });
         }
 
         this.drawBackground = () => {
@@ -51,164 +67,111 @@ class Display {
             var yEnd = Math.ceil(view.bottom + view.height) + 1;
 
             var tileSet = document.createElement("img");
-            tileSet.src = "img/tileSet2.png";
+            tileSet.src = "img/clean.png";
             var tileX;
             var tileY;
-
             for (let x = xStart; x < xEnd; x++) {
                 for (let y = yStart; y < yEnd; y++) {
-                    if (level.overworld[level.pos.y + y] === undefined || level.overworld[level.pos.y + y][level.pos.x + x] === undefined) continue;
+                    if (level.grid.tiles[x] === undefined || level.grid.tiles[x][y] === undefined) continue;
                     else {
-                        var tile = level.overworld[level.pos.y + y][level.pos.x + x];
-                        if (tile === 'w') tileX = 4, tileY = 0;
-                        else if (tile === 's') tileX = 8, tileY = 0;
-                        else if (tile === 'r') tileX = 0, tileY = 0;
-                        else if (tile === 'g') tileX = 12, tileY = 0;
-                        else if (tile === 't') tileX = 16, tileY = 0;
-                        else if (tile === 'c') tileX = 0, tileY = 4;
-
-                        var interact = (a, b) => {
-                            if (
-                                a === 'w' && !(b === 's' || b === 'c') ||
-                                a === 's' && b !== 'w' ||
-                                a === 'g' && b !== 's'
-                            ) return true;
-                            else return false;
+                        switch (level.grid.tiles[x][y].id) {
+                            case 'Plain':
+                                tileX = 1, tileY = 0;
+                                break;
+                            case 'Water':
+                                tileX = 1, tileY = 3;
+                                break;
+                            default:
+                                tileX = 0, tileY = 0;
+                                break;
                         }
-
-                        if (tile !== 'c' && tile !== 'r') {
-                            var n = {
-                                bottom:level.overworld[level.pos.y + y + 1] && level.overworld[level.pos.y + y + 1][level.pos.x + x] &&
-                                    (level.overworld[level.pos.y + y + 1][level.pos.x + x] === tile || interact(tile, level.overworld[level.pos.y + y + 1][level.pos.x + x])),
-                                right:level.overworld[level.pos.y + y] && level.overworld[level.pos.y + y][level.pos.x + x + 1] &&
-                                    (level.overworld[level.pos.y + y][level.pos.x + x + 1] === tile || interact(tile, level.overworld[level.pos.y + y][level.pos.x + x + 1])),
-                                top:level.overworld[level.pos.y + y - 1] && level.overworld[level.pos.y + y - 1][level.pos.x + x] &&
-                                    (level.overworld[level.pos.y + y - 1][level.pos.x + x] === tile || interact(tile, level.overworld[level.pos.y + y - 1][level.pos.x + x])),
-                                left:level.overworld[level.pos.y + y] && level.overworld[level.pos.y + y][level.pos.x + x - 1] &&
-                                    (level.overworld[level.pos.y + y][level.pos.x + x - 1] === tile || interact(tile, level.overworld[level.pos.y + y][level.pos.x + x - 1])),
-
-                                bottomRight:level.overworld[level.pos.y + y + 1] && level.overworld[level.pos.y + y + 1][level.pos.x + x + 1] &&
-                                    (level.overworld[level.pos.y + y + 1][level.pos.x + x + 1] === tile || interact(tile, level.overworld[level.pos.y + y + 1][level.pos.x + x + 1])),
-                                topRight:level.overworld[level.pos.y + y - 1] && level.overworld[level.pos.y + y - 1][level.pos.x + x + 1] &&
-                                    (level.overworld[level.pos.y + y - 1][level.pos.x + x + 1] === tile || interact(tile, level.overworld[level.pos.y + y - 1][level.pos.x + x + 1])),
-                                topLeft:level.overworld[level.pos.y + y - 1] && level.overworld[level.pos.y + y - 1][level.pos.x + x - 1] &&
-                                    (level.overworld[level.pos.y + y - 1][level.pos.x + x - 1] === tile || interact(tile, level.overworld[level.pos.y + y - 1][level.pos.x + x - 1])),
-                                bottomLeft:level.overworld[level.pos.y + y + 1] && level.overworld[level.pos.y + y + 1][level.pos.x + x - 1] &&
-                                    (level.overworld[level.pos.y + y + 1][level.pos.x + x - 1] === tile || interact(tile, level.overworld[level.pos.y + y + 1][level.pos.x + x - 1]))
-                            };
-
-                            if (!(n.bottom && n.right && n.top && n.left)) {
-                                if (!n.bottom && !n.right && !n.top && !n.left) tileY += 1;
-                                else if (n.bottom && !n.right && n.top && !n.left) tileY += 2;
-                                else if (!n.bottom && n.right && !n.top && n.left) tileY += 3;
-    
-                                else if (n.bottom && n.right && !n.top && n.left && n.bottomLeft && n.bottomRight) tileX += 1, tileY += 0;
-                                else if (n.bottom && !n.right && n.top && n.left && n.topLeft && n.bottomLeft) tileX += 1, tileY += 1;
-                                else if (!n.bottom && n.right && n.top && n.left && n.topLeft && n.topRight) tileX += 1, tileY += 2;
-                                else if (n.bottom && n.right && n.top && !n.left && n.topRight && n.bottomRight) tileX += 1, tileY += 3;
-                                else if (n.bottom && n.right && !n.top && n.left && !n.bottomLeft && !n.bottomRight) tileX += 2, tileY += 8;
-                                else if (n.bottom && !n.right && n.top && n.left && !n.topLeft && !n.bottomLeft) tileX += 2, tileY += 9;
-                                else if (!n.bottom && n.right && n.top && n.left && !n.topLeft && !n.topRight) tileX += 2, tileY += 10;
-                                else if (n.bottom && n.right && n.top && !n.left && !n.topRight && !n.bottomRight) tileX += 2, tileY += 11;
-
-                                else if (n.bottom && n.right && !n.top && n.left && !n.bottomLeft && n.bottomRight) tileX += 1, tileY += 8;
-                                else if (n.bottom && !n.right && n.top && n.left && !n.topLeft && n.bottomLeft) tileX += 1, tileY += 9;
-                                else if (!n.bottom && n.right && n.top && n.left && n.topLeft && !n.topRight) tileX += 1, tileY += 10;
-                                else if (n.bottom && n.right && n.top && !n.left && n.topRight && !n.bottomRight) tileX += 1, tileY += 11;
-                                else if (n.bottom && n.right && !n.top && n.left && n.bottomLeft && !n.bottomRight) tileY += 8;
-                                else if (n.bottom && !n.right && n.top && n.left && n.topLeft && !n.bottomLeft) tileY += 9;
-                                else if (!n.bottom && n.right && n.top && n.left && !n.topLeft && n.topRight) tileY += 10;
-                                else if (n.bottom && n.right && n.top && !n.left && !n.topRight && n.bottomRight) tileY += 11;
-    
-                                else if (n.bottom && !n.right && !n.top && n.left && n.bottomLeft) tileX += 2, tileY += 0;
-                                else if (!n.bottom && !n.right && n.top && n.left && n.topLeft) tileX += 2, tileY += 1;
-                                else if (!n.bottom && n.right && n.top && !n.left && n.topRight) tileX += 2, tileY += 2;
-                                else if (n.bottom && n.right && !n.top && !n.left && n.bottomRight) tileX += 2, tileY += 3;
-                                else if (n.bottom && !n.right && !n.top && n.left && !n.bottomLeft && n.topRight) tileX += 3, tileY += 8;
-                                else if (!n.bottom && !n.right && n.top && n.left && !n.topLeft && n.bottomRight) tileX += 3, tileY += 9;
-                                else if (!n.bottom && n.right && n.top && !n.left && !n.topRight && n.bottomLeft) tileX += 3, tileY += 10;
-                                else if (n.bottom && n.right && !n.top && !n.left && !n.bottomRight && n.topLeft) tileX += 3, tileY += 11;
-
-                                else if (!n.bottom && !n.right && !n.top && n.left) tileX += 3, tileY += 0;
-                                else if (!n.bottom && !n.right && n.top && !n.left) tileX += 3, tileY += 1;
-                                else if (!n.bottom && n.right && !n.top && !n.left) tileX += 3, tileY += 2;
-                                else if (n.bottom && !n.right && !n.top && !n.left) tileX += 3, tileY += 3;
-                            }
-                            else if (!(n.bottomRight && n.topRight && n.topLeft && n.bottomLeft)) {
-                                tileY += 4;
-                                if (!n.topRight && !n.bottomRight && !n.bottomLeft && !n.topLeft) tileY += 1;
-                                else if (n.topRight && !n.bottomRight && n.bottomLeft && !n.topLeft) tileY += 2;
-                                else if (!n.topRight && n.bottomRight && !n.bottomLeft && n.topLeft) tileY += 3;
-    
-                                else if (!n.topRight && n.bottomRight && n.bottomLeft && n.topLeft) tileX += 1, tileY += 0;
-                                else if (n.topRight && !n.bottomRight && n.bottomLeft && n.topLeft) tileX += 1, tileY += 1;
-                                else if (n.topRight && n.bottomRight && !n.bottomLeft && n.topLeft) tileX += 1, tileY += 2;
-                                else if (n.topRight && n.bottomRight && n.bottomLeft && !n.topLeft) tileX += 1, tileY += 3;
-    
-                                else if (!n.topRight && !n.bottomRight && n.bottomLeft && n.topLeft) tileX += 2, tileY += 0;
-                                else if (n.topRight && !n.bottomRight && !n.bottomLeft && n.topLeft) tileX += 2, tileY += 1;
-                                else if (n.topRight && n.bottomRight && !n.bottomLeft && !n.topLeft) tileX += 2, tileY += 2;
-                                else if (!n.topRight && n.bottomRight && n.bottomLeft && !n.topLeft) tileX += 2, tileY += 3;
-
-                                else if (!n.topRight && !n.bottomRight && !n.bottomLeft && n.topLeft) tileX += 3, tileY += 0;
-                                else if (n.topRight && !n.bottomRight && !n.bottomLeft && !n.topLeft) tileX += 3, tileY += 1;
-                                else if (!n.topRight && n.bottomRight && !n.bottomLeft && !n.topLeft) tileX += 3, tileY += 2;
-                                else if (!n.topRight && !n.bottomRight && n.bottomLeft && !n.topLeft) tileX += 3, tileY += 3;
-                            }
+                        this.cx.drawImage(tileSet,
+                            tileX * 16, tileY * 16, 16, 16,
+                            (x - view.left) * 16, (y - view.bottom) * 16, 16, 16);
+                        
+                        if (level.grid.tiles[x][y].isInMoveReach) {
+                            this.cx.fillStyle = '#00f5';
+                            this.cx.fillRect((x - view.left) * 16, (y - view.bottom) * 16, 15, 15);
                         }
-                        // else {
-                        //     var n = {
-                        //         bottom:level.overworld[level.pos.y + y + 1][level.pos.x + x],
-                        //         right:level.overworld[level.pos.y + y][level.pos.x + x + 1],
-                        //         top:level.overworld[level.pos.y + y - 1][level.pos.x + x],
-                        //         left:level.overworld[level.pos.y + y][level.pos.x + x - 1],
-
-                        //         bottomRight:level.overworld[level.pos.y + y + 1][level.pos.x + x + 1],
-                        //         topRight:level.overworld[level.pos.y + y - 1][level.pos.x + x + 1],
-                        //         topLeft:level.overworld[level.pos.y + y - 1][level.pos.x + x - 1],
-                        //         bottomLeft:level.overworld[level.pos.y + y + 1][level.pos.x + x - 1]
-                        //     };
-
-                        //     if (n.top === 's' && n.left === 's' && n.right === 'g' && n.bottom === 'g') tileX = 8, tileY = 12;
-                        //     if (n.top === 's' && n.left === 'g' && n.right === 's' && n.bottom === 'g') tileX = 8, tileY = 13;
-                        //     else if (n.top === 'g' && n.left === 'c' && n.right === 'c' && n.bottom === 's') tileX = 9, tileY = 12;
-                        //     else if (n.top === 'g' && n.left === 's' && n.right === 'g' && n.bottom === 's') tileX = 9, tileY = 13;
-                        // }
-
-                        var screenX = (x - view.left) * 16;
-                        var screenY = (y - view.bottom) * 16;
-
-                        if (tile === 'w') {
-                            this.cx.drawImage(tileSet, 3 * 16, Math.round(this.frame / 8) % 32 * 16, 16, 16, screenX, screenY, 16, 16);
-                        }
-                        this.cx.drawImage(tileSet, tileX * 16, tileY * 16, 16, 16, screenX, screenY, 16, 16);
                     }
                 }
+            }
+
+            if (level.grid.cursor.pathToSelectedUnit) {
+                this.cx.strokeStyle = '#ff8';
+                this.cx.lineWidth = 4;
+                this.cx.moveTo((level.grid.cursor.pos.x - view.left) * 16 + 8, (level.grid.cursor.pos.y - view.bottom) * 16 + 8);
+                this.cx.beginPath();
+                this.cx.lineTo((level.grid.cursor.pos.x - view.left) * 16 + 8, (level.grid.cursor.pos.y - view.bottom) * 16 + 8);
+                level.grid.cursor.pathToSelectedUnit.forEach((tile, key) => {
+                    if (key !== 0) this.cx.lineTo((tile.pos.x - view.left) * 16 + 8, (tile.pos.y - view.bottom) * 16 + 8);
+                });
+                this.cx.stroke();
             }
         }
 
         this.drawCursor = () => {
             var sprite = document.createElement("img");
             sprite.src = 'img/cursor.png';
-
             this.cx.drawImage(sprite,
-                Math.round(this.frame / 8) % 3 * 24, 0, 24, 24,
-                (level.cursor.pos.x - this.viewport.left) * 16 - 4,
-                (level.cursor.pos.y - this.viewport.bottom) * 16 - 4,
-                24, 24
+                Math.round(this.frame / 8) % 3 * 16 * 1.5, (level.grid.cursor.selectedUnit ? 1 : 0) * 24, 16 * 1.5, 16 * 1.5,
+                (level.grid.cursor.pos.x - this.viewport.left) * 16 - 4,
+                (level.grid.cursor.pos.y - this.viewport.bottom) * 16 - 4,
+                16 * 1.5, 16 * 1.5
             );
+        }
 
+        this.drawHUD = () => {
 
+            var tileInfo = document.createElement("img");
+            tileInfo.src = 'img/tileInfo.png';
+            this.cx.drawImage(tileInfo,
+                0, 0, 48, 24,
+                0, 0, 48, 24
+            );
             this.cx.fillStyle = '#fff';
-            this.cx.font = '8px sans-serif';
-            this.cx.fillText('x:' + level.cursor.pos.x, 2, 8);
-            this.cx.fillText('y:' + level.cursor.pos.y, 2, 16);
-            this.cx.fillText(level.cursor.hoveredTile.tile, 2, 24);
+            this.cx.font = '7px Tahoma';
+            this.cx.textAlign = 'center';
+            this.cx.fillText(level.grid.cursor.hoveredTile.id, 24, 10);
+            this.cx.textAlign = 'left';
+            this.cx.fillStyle = '#bbf';
+            this.cx.fillText(level.grid.cursor.hoveredTile.def, 12, 20);
+            this.cx.fillText(level.grid.cursor.hoveredTile.avo, 32, 20);
+
+            if (level.grid.cursor.hoveredUnit) {
+                var unitInfo = document.createElement("img");
+                unitInfo.src = 'img/unitInfo.png';
+                this.cx.drawImage(unitInfo,
+                    0, 0, 112, 24,
+                    this.canvas.width / this.zoom - 112, 0, 112, 24
+                );
+
+                var mugshots = document.createElement("img");
+                mugshots.src = 'img/mugshots.png';
+                this.cx.drawImage(mugshots,
+                    level.grid.cursor.hoveredUnit.mugshot * 21, 0, 21, 21,
+                    this.canvas.width / this.zoom - 111, 1, 21, 21
+                );
+
+                this.cx.textAlign = 'left';
+                this.cx.fillStyle = '#fff';
+                this.cx.font = '7px Tahoma';
+                this.cx.fillText(level.grid.cursor.hoveredUnit.name, this.canvas.width / this.zoom - 88, 10);
+                this.cx.fillStyle = '#bbf';
+                this.cx.font = '6px Tahoma';
+                this.cx.fillText('HP', this.canvas.width / this.zoom - 88, 18);
+                this.cx.fillText('LV', this.canvas.width / this.zoom - 26, 9);
+                this.cx.font = '7px Tahoma';
+                this.cx.fillText(level.grid.cursor.hoveredUnit.unitClass, this.canvas.width / this.zoom - 59, 20);
+                this.cx.fillStyle = '#fff';
+                this.cx.fillText('20/20', this.canvas.width / this.zoom - 79, 20);
+                this.cx.fillText('20', this.canvas.width / this.zoom - 12, 10);
+            }
         }
 
         this.resize = () => {
-            this.canvas.width = Math.min(innerWidth, level.size.x * 16 * this.zoom);
-            this.canvas.height = Math.min(innerHeight, level.size.y * 16 * this.zoom);
+            this.canvas.width = Math.min(innerWidth, level.grid.size.x * 16 * this.zoom);
+            this.canvas.height = Math.min(innerHeight, level.grid.size.y * 16 * this.zoom);
             this.cx.scale(this.zoom, this.zoom);
             this.cx.imageSmoothingEnabled = false;
 
