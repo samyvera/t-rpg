@@ -13,7 +13,7 @@ class Grid {
                 switch (overworld[y][x]) {
                     case 'w':
                         id = 'Water';
-                        avo = 10;
+                        avo = -30;
                         break;
                     case 'g':
                         id = 'Plain';
@@ -41,8 +41,8 @@ class Grid {
         }
 
         this.units = [
-            new Unit('Harlson', 'Knight', false, new Vector2D(3, 3), 0, 7, null),
-            new Unit('Nui', 'Priest', true, new Vector2D(9, 4), 1, 5, null),
+            new Unit('Harlson', 'Lord', false, new Vector2D(3, 3), 1, 7, null),
+            new Unit('Nui', 'Priest', true, new Vector2D(9, 4), 0, 5, null),
         ];
 
         this.update = (level, keys) => {

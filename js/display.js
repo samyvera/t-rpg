@@ -18,6 +18,8 @@ class Display {
             height: this.canvas.height / this.zoom / 16 - 1
         }
 
+        this.lastShowedPath = null;
+
         this.drawFrame = () => {
             this.updateViewport();
 
@@ -50,11 +52,24 @@ class Display {
             var yEnd = Math.ceil(view.bottom + view.height) + 1;
 
             level.grid.units.forEach(unit => {
-                this.cx.fillStyle = unit.affiliation ? '#00f' : '#f00';
-                this.cx.fillStyle = unit.isSelected ? '#f80' : this.cx.fillStyle;
+                var xPos = 0;
+                var yPos = 0;
+
                 if (unit.pos.x < xEnd && unit.pos.x + 1 > xStart &&
                     unit.pos.y < yEnd && unit.pos.y + 1 > yStart) {
-                    this.cx.fillRect((unit.pos.x - view.left) * 16 + 2, (unit.pos.y - view.bottom) * 16 + 2, 12, 12);
+                    var unitSprite = document.createElement("img");
+                    unitSprite.src = "img/nui.png";
+
+                    if (unit.isSelected) yPos += 2;
+
+                    var frameUnit = 0;
+                    if (Math.round(this.frame / 8) % 8 > 2) frameUnit = 1;
+                    if (Math.round(this.frame / 8) % 8 > 3) frameUnit = 2;
+                    if (Math.round(this.frame / 8) % 8 > 6) frameUnit = 3;
+
+                    this.cx.drawImage(unitSprite,
+                        frameUnit * 24, yPos * 24 + 24 * unit.profileId, 24, 24,
+                        (unit.pos.x - view.left) * 16 - 4, (unit.pos.y - view.bottom) * 16 - 10, 24, 24);
                 }
             });
         }
@@ -88,26 +103,30 @@ class Display {
                         this.cx.drawImage(tileSet,
                             tileX * 16, tileY * 16, 16, 16,
                             (x - view.left) * 16, (y - view.bottom) * 16, 16, 16);
-                        
+
                         if (level.grid.tiles[x][y].isInMoveReach) {
-                            this.cx.fillStyle = '#00f5';
-                            this.cx.fillRect((x - view.left) * 16, (y - view.bottom) * 16, 15, 15);
+                            var gradient = this.cx.createLinearGradient((x - view.left) * 16, (y - view.bottom) * 16, (x - view.left) * 16 + 16, (y - view.bottom) * 16 + 16);
+                            gradient.addColorStop(0, '#88f8');
+                            gradient.addColorStop(1, '#00f5');
+                            this.cx.fillStyle = gradient;
+                            this.cx.fillRect((x - view.left) * 16, (y - view.bottom) * 16, 16, 16);
                         }
                     }
                 }
             }
 
             if (level.grid.cursor.pathToSelectedUnit) {
+                if (level.grid.cursor.pos.equals(level.grid.cursor.pos.floor())) this.lastShowedPath = level.grid.cursor.pathToSelectedUnit;
                 this.cx.strokeStyle = '#ff8';
                 this.cx.lineWidth = 4;
-                this.cx.moveTo((level.grid.cursor.pos.x - view.left) * 16 + 8, (level.grid.cursor.pos.y - view.bottom) * 16 + 8);
+                this.cx.moveTo((this.lastShowedPath[0].pos.x - view.left) * 16 + 8, (this.lastShowedPath[0].pos.y - view.bottom) * 16 + 8);
                 this.cx.beginPath();
-                this.cx.lineTo((level.grid.cursor.pos.x - view.left) * 16 + 8, (level.grid.cursor.pos.y - view.bottom) * 16 + 8);
-                level.grid.cursor.pathToSelectedUnit.forEach((tile, key) => {
-                    if (key !== 0) this.cx.lineTo((tile.pos.x - view.left) * 16 + 8, (tile.pos.y - view.bottom) * 16 + 8);
-                });
+                this.lastShowedPath.forEach(tile => this.cx.lineTo((tile.pos.x - view.left) * 16 + 8, (tile.pos.y - view.bottom) * 16 + 8));
                 this.cx.stroke();
-            }
+                var pathLight = document.createElement("img");
+                pathLight.src = 'img/pathLight.png';
+                this.cx.drawImage(pathLight, 0, 0, 16, 16, (this.lastShowedPath[0].pos.x - view.left) * 16, (this.lastShowedPath[0].pos.y - view.bottom) * 16, 16, 16);
+            } else this.lastShowedPath = null;
         }
 
         this.drawCursor = () => {
@@ -149,7 +168,7 @@ class Display {
                 var mugshots = document.createElement("img");
                 mugshots.src = 'img/mugshots.png';
                 this.cx.drawImage(mugshots,
-                    level.grid.cursor.hoveredUnit.mugshot * 21, 0, 21, 21,
+                    level.grid.cursor.hoveredUnit.profileId * 21, 0, 21, 21,
                     this.canvas.width / this.zoom - 111, 1, 21, 21
                 );
 
