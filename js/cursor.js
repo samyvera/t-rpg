@@ -15,8 +15,12 @@ class Cursor {
 
         this.update = (grid, keys) => {
             this.hoveredTile = grid.tiles[Math.floor(this.pos.x)][Math.floor(this.pos.y)];
+
+            if (this.hoveredUnit) this.hoveredUnit.isHovered = false;
             this.hoveredUnit = null;
             grid.units.forEach(unit => this.hoveredUnit = unit.pos.equals(this.pos.floor()) ? unit : this.hoveredUnit);
+            if (this.hoveredUnit) this.hoveredUnit.isHovered = true;
+            
             this.move(grid, keys);
 
             if (!this.pressedSelectLastFrame) {
@@ -53,7 +57,15 @@ class Cursor {
             if (this.selectedUnit) {
                 var pathFinder = new Pathfinding(grid.tiles, grid.tiles[this.selectedUnit.pos.x][this.selectedUnit.pos.y], this.hoveredTile);
                 while (pathFinder.isSearching) pathFinder.search();
-                if (pathFinder.isSolvable) this.pathToSelectedUnit = pathFinder.path;
+                if (pathFinder.isSolvable) {
+                    this.pathToSelectedUnit = pathFinder.path;
+                    if (pathFinder.path.length > 1) {
+                        this.selectedUnit.dir = new Vector2D(
+                            this.selectedUnit.pos.x - pathFinder.path[pathFinder.path.length-2].pos.x,
+                            this.selectedUnit.pos.y - pathFinder.path[pathFinder.path.length-2].pos.y);
+                    }
+                    else this.selectedUnit.dir = new Vector2D(0, -1);
+                }
             }
             else this.pathToSelectedUnit = null;
         }

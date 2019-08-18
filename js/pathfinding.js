@@ -18,7 +18,7 @@ class Pathfinding {
         }
 
         this.heuristic = (a, b) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
-
+        
         this.search = () => {
             if (this.openSet.length > 0) {
                 var pathIndex = 0;
@@ -36,7 +36,7 @@ class Pathfinding {
                     this.closedSet.push(currentCell);
     
                     currentCell.neighbors.forEach(neighbor => {
-                        if (!this.closedSet.includes(neighbor) && neighbor.id !== 'Water' && neighbor.id !== 'Unknown') {
+                        if (!this.closedSet.includes(neighbor) && neighbor.isCrossable) {
                             var g = currentCell.g + 1;
     
                             if (this.openSet.includes(neighbor)) {

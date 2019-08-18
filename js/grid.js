@@ -1,5 +1,5 @@
 class Grid {
-    constructor(overworld) {
+    constructor(overworld, shadows) {
         this.size = new Vector2D(overworld[0].length, overworld.length);
 
         this.cursor = new Cursor(new Vector2D(9, 4));
@@ -7,22 +7,35 @@ class Grid {
         this.tiles = Array.from(Array(this.size.x), () => new Array(this.size.y));
         for (let x = 0; x < this.size.x; x++)
             for (let y = 0; y < this.size.y; y++) {
-                var id = null;
+                var id = overworld[y][x];
                 var def = 0;
                 var avo = 0;
+                var isCrossable = false;
+                var shadow = shadows[y][x];
+
                 switch (overworld[y][x]) {
-                    case 'w':
-                        id = 'Water';
+                    case '1':
+                        isCrossable = true;
+                        break;
+                    case '4':
+                        isCrossable = true;
+                        break;
+                    case '6':
+                        isCrossable = true;
+                        break;
+                    case 'e':
+                        isCrossable = true;
+                        break;
+                    case 'm':
+                        isCrossable = true;
+                        break;
+                    case 'q':
                         avo = -30;
                         break;
-                    case 'g':
-                        id = 'Plain';
-                        break;
                     default:
-                        id = 'Unknown';
                         break;
                 }
-                this.tiles[x][y] = new Tile(id, new Vector2D(x, y), def, avo);
+                this.tiles[x][y] = new Tile(id, new Vector2D(x, y), def, avo, isCrossable, shadow);
             };
         this.tiles.forEach(row => row.forEach(tile => tile.setNeighbors(this.tiles)));
 

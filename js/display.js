@@ -20,6 +20,12 @@ class Display {
 
         this.lastShowedPath = null;
 
+        this.flipHorizontally = (context, around) => {
+            context.translate(around, 0);
+            context.scale(-1, 1);
+            context.translate(-around, 0);
+        };
+
         this.drawFrame = () => {
             this.updateViewport();
 
@@ -52,7 +58,7 @@ class Display {
             var yEnd = Math.ceil(view.bottom + view.height) + 1;
 
             level.grid.units.forEach(unit => {
-                var xPos = 0;
+                var xPos = unit.profileId * 4 * 24;
                 var yPos = 0;
 
                 if (unit.pos.x < xEnd && unit.pos.x + 1 > xStart &&
@@ -60,16 +66,24 @@ class Display {
                     var unitSprite = document.createElement("img");
                     unitSprite.src = "img/nui.png";
 
-                    if (unit.isSelected) yPos += 2;
-
+                    if (unit.isHovered) yPos = 1;
+                    if (unit.isSelected) {
+                        if (unit.dir.y === -1) yPos = 2;
+                        else if (unit.dir.y === 1) yPos = 4;
+                        else yPos = 3;
+                    }
+                    
                     var frameUnit = 0;
                     if (Math.round(this.frame / 8) % 8 > 2) frameUnit = 1;
                     if (Math.round(this.frame / 8) % 8 > 3) frameUnit = 2;
                     if (Math.round(this.frame / 8) % 8 > 6) frameUnit = 3;
 
+                    this.cx.save();
+                    if (unit.isSelected && unit.dir.x === -1) this.flipHorizontally(this.cx, (unit.pos.x - view.left) * 16 + 8);
                     this.cx.drawImage(unitSprite,
-                        frameUnit * 24, yPos * 24 + 24 * unit.profileId, 24, 24,
+                        xPos + frameUnit * 24, yPos * 24, 24, 24,
                         (unit.pos.x - view.left) * 16 - 4, (unit.pos.y - view.bottom) * 16 - 10, 24, 24);
+                    this.cx.restore();
                 }
             });
         }
@@ -90,11 +104,74 @@ class Display {
                     if (level.grid.tiles[x] === undefined || level.grid.tiles[x][y] === undefined) continue;
                     else {
                         switch (level.grid.tiles[x][y].id) {
-                            case 'Plain':
+                            case '1':
                                 tileX = 1, tileY = 0;
                                 break;
-                            case 'Water':
-                                tileX = 1, tileY = 3;
+                            case '2':
+                                tileX = 2, tileY = 0;
+                                break;
+                            case '3':
+                                tileX = 3, tileY = 0;
+                                break;
+                            case '4':
+                                tileX = 4, tileY = 0;
+                                break;
+                            case '5':
+                                tileX = 5, tileY = 0;
+                                break;
+                            case '6':
+                                tileX = 6, tileY = 0;
+                                break;
+                            case '7':
+                                tileX = 7, tileY = 0;
+                                break;
+                            case '8':
+                                tileX = 0, tileY = 1;
+                                break;
+                            case '9':
+                                tileX = 1, tileY = 1;
+                                break;
+                            case 'a':
+                                tileX = 2, tileY = 1;
+                                break;
+                            case 'b':
+                                tileX = 3, tileY = 1;
+                                break;
+                            case 'c':
+                                tileX = 4, tileY = 1;
+                                break;
+                            case 'd':
+                                tileX = 5, tileY = 1;
+                                break;
+                            case 'e':
+                                tileX = 6, tileY = 1;
+                                break;
+                            case 'f':
+                                tileX = 7, tileY = 1;
+                                break;
+                            case 'g':
+                                tileX = 0, tileY = 2;
+                                break;
+                            case 'h':
+                                tileX = 1, tileY = 2;
+                                break;
+                            case 'i':
+                                tileX = 2, tileY = 2;
+                                break;
+                            case 'j':
+                                tileX = 3, tileY = 2;
+                                break;
+                            case 'k':
+                                tileX = 4, tileY = 2;
+                                break;
+                            case 'l':
+                                tileX = 5, tileY = 2;
+                                break;
+                            case 'm':
+                                tileX = 6, tileY = 2;
+                                break;
+                            case 'n':
+                                tileX = 7, tileY = 2;
                                 break;
                             default:
                                 tileX = 0, tileY = 0;
@@ -103,6 +180,11 @@ class Display {
                         this.cx.drawImage(tileSet,
                             tileX * 16, tileY * 16, 16, 16,
                             (x - view.left) * 16, (y - view.bottom) * 16, 16, 16);
+
+                        if (level.grid.tiles[x][y].shadow === '1') {
+                            this.cx.fillStyle = '#0008';
+                            this.cx.fillRect((x - view.left) * 16, (y - view.bottom) * 16, 8, 16);
+                        }
 
                         if (level.grid.tiles[x][y].isInMoveReach) {
                             var gradient = this.cx.createLinearGradient((x - view.left) * 16, (y - view.bottom) * 16, (x - view.left) * 16 + 16, (y - view.bottom) * 16 + 16);
@@ -117,15 +199,17 @@ class Display {
 
             if (level.grid.cursor.pathToSelectedUnit) {
                 if (level.grid.cursor.pos.equals(level.grid.cursor.pos.floor())) this.lastShowedPath = level.grid.cursor.pathToSelectedUnit;
-                this.cx.strokeStyle = '#ff8';
+                this.cx.strokeStyle = '#8ff';
                 this.cx.lineWidth = 4;
                 this.cx.moveTo((this.lastShowedPath[0].pos.x - view.left) * 16 + 8, (this.lastShowedPath[0].pos.y - view.bottom) * 16 + 8);
                 this.cx.beginPath();
                 this.lastShowedPath.forEach(tile => this.cx.lineTo((tile.pos.x - view.left) * 16 + 8, (tile.pos.y - view.bottom) * 16 + 8));
                 this.cx.stroke();
-                var pathLight = document.createElement("img");
-                pathLight.src = 'img/pathLight.png';
-                this.cx.drawImage(pathLight, 0, 0, 16, 16, (this.lastShowedPath[0].pos.x - view.left) * 16, (this.lastShowedPath[0].pos.y - view.bottom) * 16, 16, 16);
+                if (level.grid.cursor.pathToSelectedUnit.length > 1 || !level.grid.cursor.dir.equals(new Vector2D(0, 0))) {
+                    var pathLight = document.createElement("img");
+                    pathLight.src = 'img/pathLight.png';
+                    this.cx.drawImage(pathLight, 0, 0, 16, 16, (this.lastShowedPath[0].pos.x - view.left) * 16, (this.lastShowedPath[0].pos.y - view.bottom) * 16, 16, 16);
+                }
             } else this.lastShowedPath = null;
         }
 

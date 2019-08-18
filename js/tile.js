@@ -1,7 +1,11 @@
 class Tile {
-    constructor(id, pos, def, avo) {
+    constructor(id, pos, def, avo, isCrossable, shadow) {
         this.id = id;
         this.pos = pos;
+
+        this.isCrossable = isCrossable;
+
+        this.shadow = shadow;
 
         this.def = def;
         this.avo = avo;
@@ -11,8 +15,8 @@ class Tile {
         this.isInAttackReach = false;
 
         this.setNeighbors = tiles => {
-            if (this.pos.x < tiles[0].length-1) this.neighbors.push(tiles[this.pos.x + 1][this.pos.y]);
-            if (this.pos.y < tiles.length-1) this.neighbors.push(tiles[this.pos.x][this.pos.y + 1]);
+            if (this.pos.x < tiles.length-1) this.neighbors.push(tiles[this.pos.x + 1][this.pos.y]);
+            if (this.pos.y < tiles[0].length-1) this.neighbors.push(tiles[this.pos.x][this.pos.y + 1]);
             if (this.pos.x > 0) this.neighbors.push(tiles[this.pos.x - 1][this.pos.y]);
             if (this.pos.y > 0) this.neighbors.push(tiles[this.pos.x][this.pos.y - 1]);
         }
